@@ -24,6 +24,9 @@ def _parse_args(args=sys.argv[1:]):
 						help="Specify as \"--crop-y [y-min],[y-max]\".")
 	parser.add_argument("--crop-z",
 						help="Specify as \"--crop-z [z-min],[z-max]\".")
+	parser.add_argument("--large",
+						help="Specify whether file to be cropped is too large to fit in memory"
+							"Note: currently only works with TIFF stacks of 2D TIFFs.")
 
 	parsed_args = parser.parse_args(args)
 	return parsed_args
@@ -32,7 +35,13 @@ def _parse_args(args=sys.argv[1:]):
 def main(args=sys.argv[1:]):
 	args = _parse_args(args)
 
-	tiff_ndarray = read_tiffs(args.input)
+	try:
+		tiff_ndarray = read_tiffs(args.input)
+	except MemoryError as e:
+		# TODO: write error to log file
+		print("Error: not enough memory to load entire TIFF.")
+		print("Use \"--large\" tag to attempt handling this TIFF.")
+		exit(2)
 	x_dim, y_dim, z_dim, tiff_ndarray_reshape = reshape_and_get_tiff_dims(
 		tiff_ndarray)
 
@@ -42,9 +51,9 @@ def main(args=sys.argv[1:]):
 		else:
 			units_str = "[units: voxels]"
 		dims_str = str(x_dim) + ", " + str(y_dim) + ", " + str(z_dim)
-		print("Dimensions (x, y, z) (width, height, depth)", 
-			units_str, " : ",  dims_str)		
-	else:		
+		print("Dimensions (x, y, z) (width, height, depth)",
+			units_str, " : ",  dims_str)
+	else:
 		crop_tiffs(tiff_ndarray_reshape,
 				   args.output,
 				   x_dim = x_dim,
@@ -55,12 +64,12 @@ def main(args=sys.argv[1:]):
 				   crop_z = args.crop_z)
 
 
-def read_tiffs(file_path_glob):
+def read_tiffs(file_path_glob: str) -> numpy.ndarray:
 	"""Reads in TIFF file from UNIX-style glob, returns numpy ndarray
-	
+
 	Parameters
 	----------
-	file_path_glob : str 
+	file_path_glob : str
 		A glob expression for the stack of images to analyze,
 		e.g. "/path-to-tiffs/*.tiff"
 
@@ -79,9 +88,9 @@ def read_tiffs(file_path_glob):
 	tiff_ndarray = tifffile.imread(tiff_paths)
 
 	return tiff_ndarray
-	
 
-def reshape_and_get_tiff_dims(tiff_ndarray):
+
+def reshape_and_get_tiff_dims(tiff_ndarray: numpy.ndarray) -> numpy.ndarray:
 	"""Given a tiff ndarray, returns reformatted ndarray and its dimensions
 
 	Note: assumes there are no more than 9 extra channels and that
@@ -90,10 +99,10 @@ def reshape_and_get_tiff_dims(tiff_ndarray):
 	Parameters
 	----------
 	tiff_ndarray : numpy.ndarray
-		A numpy ndarray representing a TIFF file or TIFF stack; extra 
+		A numpy ndarray representing a TIFF file or TIFF stack; extra
 		channels such as alpha, RGB/CMYK, etc., are acceptable
 
-	Returns 
+	Returns
 	-------
 	{
 		"x_dim" : int,
@@ -103,8 +112,8 @@ def reshape_and_get_tiff_dims(tiff_ndarray):
 	}
 		"x_dim", "y_dim", "z_dim" are ints with the number of pixels in
 		the x, y, and z (width, height, depth) dimensions, respectively
-		
-		"tiff_ndarray_reshape" is a reformatted ndarray with dimensions 
+
+		"tiff_ndarray_reshape" is a reformatted ndarray with dimensions
 		in the following order: [z, y, x, <extra channels>], where extra
 		channels are optional (including RGB, CMYK, alpha, etc.)
 	"""
@@ -134,25 +143,24 @@ def reshape_and_get_tiff_dims(tiff_ndarray):
 
 
 def crop_tiffs(
-		tiff_ndarray,
-		output_filepath,
-		x_dim,
-		y_dim,
-		z_dim,
-		crop_x=None,
-		crop_y=None,
-		crop_z=None):
+		tiff_ndarray: numpy.ndarray,
+		output_filepath: str,
+		x_dim: int,
+		y_dim: int,
+		z_dim: int,
+		crop_x=None: str,
+		crop_y=None: str,
+		crop_z=None: str) -> bool:
 	"""Crops a TIFF ndarray, saving as a TIFF file
-	
 	Parameters
 	----------
 	tiff_ndarray : numpy.ndarray
-		A numpy ndarray, already padded as needed to include 3 or 4 
-		dimensions, depending on whether or not there are extra channels, 
+		A numpy ndarray, already padded as needed to include 3 or 4
+		dimensions, depending on whether or not there are extra channels,
 		in the following order: [z, x, y, <extra channels>]
 	output_filepath : str
-		A file path to which the resulting TIFF file will be saved. If the 
-		file does not exist, it will be created. 
+		A file path to which the resulting TIFF file will be saved. If the
+		file does not exist, it will be created.
 	x_dim : int
 		The number of pixels or voxels in the x-dimension
 	y_dim : int
@@ -161,16 +169,16 @@ def crop_tiffs(
 		The number of pixels or voxels in the z-dimension
 	crop_x : str
 		A string in the format "[x_min],[x_max]" such that the resulting TIFF
-		file is cropped to include all x-dimension pixels in the range 
-		(x_min, x_max), inclusive, of the original TIFF file 
+		file is cropped to include all x-dimension pixels in the range
+		(x_min, x_max), inclusive, of the original TIFF file
 	crop_y : str
-		A string in the format "[y_min],[y_max]" such that the resulting TIFF 
-		file is cropped to include all y-dimension pixels in the range 
-		(y_min, y_max), inclusive, of the original TIFF file 
+		A string in the format "[y_min],[y_max]" such that the resulting TIFF
+		file is cropped to include all y-dimension pixels in the range
+		(y_min, y_max), inclusive, of the original TIFF file
 	crop_z : str
-		A string in the format "[z_min],[z_max]" such that the resulting TIFF 
-		file is cropped to include all z-dimension pixels in the range 
-		(z_min, z_max), inclusive, of the original TIFF file 
+		A string in the format "[z_min],[z_max]" such that the resulting TIFF
+		file is cropped to include all z-dimension pixels in the range
+		(z_min, z_max), inclusive, of the original TIFF file
 
 	Returns
 	-------
@@ -187,7 +195,7 @@ def crop_tiffs(
 			raise ValueError("Minimum x-cropping value must be positive")
 		if x_min > x_max:
 			raise ValueError("Minimum x-cropping value must be smaller",
-				"than maxmimum x-cropping value")
+				"than maximum x-cropping value")
 		if x_max > x_dim:
 			raise ValueError("Maximum x-cropping value must be smaller than",
 				"the dimensions of the image")
