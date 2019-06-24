@@ -384,7 +384,7 @@ def crop_tiff_stack(
             print("Creating directory at {}.".format(output_filepath))
             os.mkdir(output_filepath)
         tiff_num = 0
-        for z in tqdm(range(z_min, z_max)):
+        for z in tqdm(range(z_min, z_max+1)):
             tiff_num_str = str(tiff_num)
             while len(tiff_num_str) < numpy.log10(z_max - z_min + 1) + 1:
                 tiff_num_str = "0" + tiff_num_str
