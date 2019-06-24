@@ -41,7 +41,7 @@ def main(args=sys.argv[1:]):
 
     # Ensures TIFF stack is outputted into a directory
     output_filepath = args.output
-    if output_filepath:
+    if args.split_output:
         if platform.system() == "Windows":
             if output_filepath[-1] != "\\":
                 output_filepath += "\\"
