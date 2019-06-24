@@ -10,6 +10,7 @@ import platform
 from typing import List
 import numpy
 import tifffile
+from tqdm import tqdm
 
 
 def _parse_args(args=sys.argv[1:]):
@@ -249,7 +250,7 @@ def crop_tiffs(
             print("Creating directory at {}.".format(output_filepath))
             os.mkdir(output_filepath)
         tiff_num = 0
-        for z in range(z_min, z_max):
+        for z in tqdm(range(z_min, z_max)):
             tiff_num_str = str(tiff_num)
             while len(tiff_num_str) < numpy.log10(z_max - z_min + 1) + 1:
                 tiff_num_str = "0" + tiff_num_str
@@ -374,7 +375,7 @@ def crop_tiff_stack(
 
     if output_tiff_stack is False:
         with tifffile.TiffWriter(output_filepath, bigtiff=bigtiff) as file:
-            for z in range(z_min, z_max + 1):
+            for z in tqdm(range(z_min, z_max + 1)):
                 tiff_ndarray = tifffile.imread(tiff_paths[z])
                 tiff_ndarray_cropped = tiff_ndarray[y_min:y_max, x_min:x_max]
                 file.save(tiff_ndarray_cropped)
@@ -383,7 +384,7 @@ def crop_tiff_stack(
             print("Creating directory at {}.".format(output_filepath))
             os.mkdir(output_filepath)
         tiff_num = 0
-        for z in range(z_min, z_max):
+        for z in tqdm(range(z_min, z_max)):
             tiff_num_str = str(tiff_num)
             while len(tiff_num_str) < numpy.log10(z_max - z_min + 1) + 1:
                 tiff_num_str = "0" + tiff_num_str
