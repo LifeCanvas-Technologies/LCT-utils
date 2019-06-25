@@ -193,7 +193,7 @@ def crop_tiffs(
 
     """
     if crop_x is None:
-        x_min = 0
+        x_min = 1
         x_max = x_dim
     else:
         x_min, x_max = [int(s) for s in crop_x.split(",")]
@@ -207,7 +207,7 @@ def crop_tiffs(
                              "the dimensions of the image")
 
     if crop_y is None:
-        y_min = 0
+        y_min = 1
         y_max = y_dim
     else:
         y_min, y_max = [int(s) for s in crop_y.split(",")]
@@ -221,7 +221,7 @@ def crop_tiffs(
                              "the dimensions of the image")
 
     if crop_z is None:
-        z_min = 0
+        z_min = 1
         z_max = z_dim
     else:
         z_min, z_max = [int(s) for s in crop_z.split(",")]
@@ -326,7 +326,7 @@ def crop_tiff_stack(
         True if successful, False otherwise
     """
     if crop_x is None:
-        x_min = 0
+        x_min = 1
         x_max = x_dim
     else:
         x_min, x_max = [int(s) for s in crop_x.split(",")]
@@ -340,7 +340,7 @@ def crop_tiff_stack(
                              "the dimensions of the image")
 
     if crop_y is None:
-        y_min = 0
+        y_min = 1
         y_max = y_dim
     else:
         y_min, y_max = [int(s) for s in crop_y.split(",")]
@@ -354,7 +354,7 @@ def crop_tiff_stack(
                              "the dimensions of the image")
 
     if crop_z is None:
-        z_min = 0
+        z_min = 1
         z_max = z_dim
     else:
         z_min, z_max = [int(s) for s in crop_z.split(",")]
