@@ -1,7 +1,7 @@
 from setuptools import setup
 
-version = "0.1.0"
-description = "A Python package that enables command-line cropping of TIFF files and stacks"
+version = "0.2.0"
+description = "Command-line cropping of TIFF files and stacks as well as corresponding JSON coordinate files"
 
 setup(
     name="crop_tiffs",
@@ -15,6 +15,8 @@ setup(
     author="Richard Qiu",
     packages=["crop_tiffs"],
     entry_points={
-        "console_scripts": ["crop-tiff=crop_tiffs.crop_tiffs:main"]
-    }
+        "console_scripts": [
+            "crop-tiff=crop_tiffs.crop_tiffs:main",
+            "crop-json=crop_tiffs.crop_jsons:main"
+        ]}
 )

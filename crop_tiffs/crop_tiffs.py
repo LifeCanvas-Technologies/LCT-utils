@@ -53,9 +53,9 @@ def main(args=sys.argv[1:]):
 
 def crop_tiff(input_glob_or_list: Union[str, List[str]],
               output_path: str,
-              crop_x: Union[str, List[int]] = None,
-              crop_y: Union[str, List[int]] = None,
-              crop_z: Union[str, List[int]] = None,
+              crop_x: Union[str, List[int], Tuple[int, int]] = None,
+              crop_y: Union[str, List[int], Tuple[int, int]] = None,
+              crop_z: Union[str, List[int], Tuple[int, int]] = None,
               split_output: bool = False) -> None:
     """Main function for cropping tiffs
 
@@ -65,14 +65,14 @@ def crop_tiff(input_glob_or_list: Union[str, List[str]],
         String containing input glob or list of file paths to individual tiffs
     output_path : str
         Output file path, shoudl either be a directory or tiff file, depending on the value of split_output
-    crop_x : Union[str, List[int]]
-        String in format "[x_min,x_max]" or list of ints in format [x_min, x_max] specifying the minimum
+    crop_x : Union[str, List[int], Tuple[int, int]]
+        String in format "[x_min,x_max]" or Sequence of ints in format [x_min, x_max] specifying the minimum
         and maximum x-values (inclusive) to include in the outputted cropped tiff
-    crop_y : Union[str, List[int]]
-        String in format "[y_min,y_max]" or list of ints in format [y_min, y_max] specifying the minimum
+    crop_y : Union[str, List[int], Tuple[int, int]]
+        String in format "[y_min,y_max]" or Sequence of ints in format [y_min, y_max] specifying the minimum
         and maximum y-values (inclusive) to include in the outputted cropped tiff
-    crop_z : Union[str, List[int]]
-        String in format "[z_min,z_max]" or list of ints in format [z_min, z_max] specifying the minimum
+    crop_z : Union[str, List[int], Tuple[int, int]]
+        String in format "[z_min,z_max]" or Sequence of ints in format [z_min, z_max] specifying the minimum
         and maximum x-values (inclusive) to include in the outputted cropped tiff
     split_output : bool
         True if output should be a directory of 2D tiffs, False if output should be single multi-page tiff file
@@ -178,12 +178,13 @@ def glob_to_list(glob_or_list: Union[List[str], Tuple[str, ...], str]) -> List[s
     return output_list
 
 
-def crop_str_to_tuple(x_dim: int,
-                      y_dim: int,
-                      z_dim: int,
-                      crop_x: Union[str, List[int]] = None,
-                      crop_y: Union[str, List[int]] = None,
-                      crop_z: Union[str, List[int]] = None) -> Tuple[List[int], List[int], List[int]]:
+def crop_str_to_tuple(x_dim: int = None,
+                      y_dim: int = None,
+                      z_dim: int = None,
+                      crop_x: Union[str, List[int], Tuple[int, int]] = None,
+                      crop_y: Union[str, List[int], Tuple[int, int]] = None,
+                      crop_z: Union[str, List[int], Tuple[int, int]] = None) \
+        -> Tuple[List[int], List[int], List[int]]:
     """Turns two comma separated ints in string form to a list of two int
     Expects dimensions of the original tiff file to use as defaults in the event that cropping dimensions
     are not specified. If crop_x, crop_y, and crop_z are guaranteed to be specified, x_dim, y_dim, and z_dim
@@ -197,14 +198,14 @@ def crop_str_to_tuple(x_dim: int,
         Number of voxels in the y-direction in the original tiff
     z_dim : int
         Number of voxels in the z-direction in the original tiff
-    crop_x : Union[str, List[int]]
-        String in format "[x_min,x_max]" or list of ints in format [x_min, x_max] specifying the minimum
+    crop_x : Union[str, List[int], Tuple[int, int]]
+        String in format "[x_min,x_max]" or Sequence of ints in format [x_min, x_max] specifying the minimum
         and maximum x-values (inclusive) to include in the outputted cropped tiff
-    crop_y : Union[str, List[int]]
-        String in format "[y_min,y_max]" or list of ints in format [y_min, y_max] specifying the minimum
+    crop_y : Union[str, List[int], Tuple[int, int]]
+        String in format "[y_min,y_max]" or Sequence of ints in format [y_min, y_max] specifying the minimum
         and maximum y-values (inclusive) to include in the outputted cropped tiff
-    crop_z : Union[str, List[int]]
-        String in format "[z_min,z_max]" or list of ints in format [z_min, z_max] specifying the minimum
+    crop_z : Union[str, List[int], Tuple[int, int]]
+        String in format "[z_min,z_max]" or Sequence of ints in format [z_min, z_max] specifying the minimum
         and maximum x-values (inclusive) to include in the outputted cropped tiff
 
     Returns
@@ -212,6 +213,22 @@ def crop_str_to_tuple(x_dim: int,
     tuple[List[int], List[int], List[int]]
         Tuple of 3 lists, each of 2 ints, in format ( [x_min, x_max], [y_min, y_max], [z_min, z_max] )
     """
+
+
+    if x_dim is None and crop_x is None:
+        raise ValueError("Need to specify at least x_dim or crop_x")
+    if y_dim is None and crop_y is None:
+        raise ValueError("Need to specify at least y_dim or crop_y")
+    if z_dim is None and crop_z is None:
+        raise ValueError("Need to specify at least z_dim or crop_z")
+
+    if x_dim is None:
+        x_dim = float("Inf")
+    if y_dim is None:
+        y_dim = float("Inf")
+    if z_dim is None:
+        z_dim = float("Inf")
+
     if crop_x is None:
         crop_x_list = [1, x_dim]
     elif type(crop_x) is list:
