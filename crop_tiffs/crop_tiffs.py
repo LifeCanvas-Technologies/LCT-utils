@@ -233,6 +233,8 @@ def crop_str_to_tuple(x_dim: int = None,
         crop_x_list = [1, x_dim]
     elif type(crop_x) is list:
         crop_x_list = crop_x
+    elif type(crop_x) is tuple:
+        crop_x_list = list(crop_x)
     else:
         crop_x_list = [int(s) for s in crop_x.split(",")]
     if crop_x_list[0] < 0:
@@ -250,6 +252,8 @@ def crop_str_to_tuple(x_dim: int = None,
         crop_y_list = [1, y_dim]
     elif type(crop_y) is list:
         crop_y_list = crop_y
+    elif type(crop_y) is tuple:
+        crop_y_list = list(crop_y)
     else:
         crop_y_list = [int(s) for s in crop_y.split(",")]
     if crop_y_list[0] < 0:
@@ -267,6 +271,8 @@ def crop_str_to_tuple(x_dim: int = None,
         crop_z_list = [1, z_dim]
     elif type(crop_z) is list:
         crop_z_list = crop_z
+    elif type(crop_z) is tuple:
+        crop_z_list = list(crop_z)
     else:
         crop_z_list = [int(s) for s in crop_z.split(",")]
     if crop_z_list[0] < 0:
