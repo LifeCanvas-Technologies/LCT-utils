@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = "0.2.0"
+version = "0.2.1"
 description = "Command-line cropping of TIFF files and stacks as well as corresponding JSON coordinate files"
 
 setup(

@@ -7,7 +7,7 @@ import sys
 import json
 from typing import List, Tuple, Union
 from .crop_tiffs import crop_str_to_tuple
-import tqdm
+import tqdm.auto as tqdm
 
 
 def parse_args(args=sys.argv[1:]):
