@@ -3,7 +3,6 @@ A module to enable command-line cropping of TIFF files and stacks
 """
 
 import argparse
-import glob
 import sys
 import os
 import platform
@@ -11,6 +10,8 @@ from typing import List, Tuple, Sequence, Union
 import numpy
 import tifffile
 import tqdm.auto as tqdm
+
+from .utils import glob_to_list, parse_crop_dims_str, validate_tiff_crop_dims
 
 
 def parse_args(args=sys.argv[1:]):
@@ -94,7 +95,8 @@ def crop_tiff(input_glob_or_list: Union[str, List[str]],
                 output_path += "/"
 
     x_dim, y_dim, z_dim = check_dims(input_glob_or_list)
-    crop_x, crop_y, crop_z = crop_str_to_tuple(x_dim, y_dim, z_dim, crop_x, crop_y, crop_z)
+    crop_x, crop_y, crop_z = parse_crop_dims_str(crop_x, crop_y, crop_z)
+    crop_x, crop_y, crop_z = validate_tiff_crop_dims(x_dim, y_dim, z_dim, crop_x, crop_y, crop_z)
 
     if len(tiff_paths) == 1:
         tiff_ndarray_reshape = reshape_single_tiff(tiff_paths[0])
@@ -142,151 +144,6 @@ def check_dims(input_glob_or_list, print_out: bool = True) -> Tuple[int, int, in
         print("Dimensions (x, y, z) (width, height, depth) [units: voxels]  : ", dims_str)
 
     return x_dim, y_dim, z_dim
-
-
-def glob_to_list(glob_or_list: Union[List[str], Tuple[str, ...], str]) -> List[str]:
-    """Converts globs to sorted lists of file paths
-    If a list or tuple is passed in, it will be sorted and returned as a list
-
-    Parameters
-    ----------
-    glob_or_list : Union[List[str], Tuple[str, ...], str]
-        If a glob is passed in, a corresponding list of sorted file paths will be returned, else if a list or
-        tuple is passed in, it will be sorted and returned as a list
-
-    Returns
-    -------
-    List[str]
-        A sorted list of file paths
-
-    """
-    if type(glob_or_list) is list:
-        output_list = sorted(glob_or_list)
-        if len(output_list) < 1:
-            raise Exception("Input list of length 0!")
-    elif type(glob_or_list) is tuple:
-        output_list = sorted(list(glob_or_list))
-        if len(output_list) < 1:
-            raise Exception("Input tuple of length 0!")
-    elif type(glob_or_list) is str:
-        output_list = sorted(glob.glob(glob_or_list))
-        if len(output_list) < 1:
-            raise Exception("No files found at {}".format(glob_or_list))
-    else:
-        raise TypeError("Input was not a glob, list, or tuple")
-
-    return output_list
-
-
-def crop_str_to_tuple(x_dim: int = None,
-                      y_dim: int = None,
-                      z_dim: int = None,
-                      crop_x: Union[str, List[int], Tuple[int, int]] = None,
-                      crop_y: Union[str, List[int], Tuple[int, int]] = None,
-                      crop_z: Union[str, List[int], Tuple[int, int]] = None) \
-        -> Tuple[List[int], List[int], List[int]]:
-    """Turns two comma separated ints in string form to a list of two int
-    Expects dimensions of the original tiff file to use as defaults in the event that cropping dimensions
-    are not specified. If crop_x, crop_y, and crop_z are guaranteed to be specified, x_dim, y_dim, and z_dim
-    are not used.
-
-    Parameters
-    ----------
-    x_dim : int
-        Number of voxels in the x-direction in the original tiff
-    y_dim : int
-        Number of voxels in the y-direction in the original tiff
-    z_dim : int
-        Number of voxels in the z-direction in the original tiff
-    crop_x : Union[str, List[int], Tuple[int, int]]
-        String in format "[x_min,x_max]" or Sequence of ints in format [x_min, x_max] specifying the minimum
-        and maximum x-values (inclusive) to include in the outputted cropped tiff
-    crop_y : Union[str, List[int], Tuple[int, int]]
-        String in format "[y_min,y_max]" or Sequence of ints in format [y_min, y_max] specifying the minimum
-        and maximum y-values (inclusive) to include in the outputted cropped tiff
-    crop_z : Union[str, List[int], Tuple[int, int]]
-        String in format "[z_min,z_max]" or Sequence of ints in format [z_min, z_max] specifying the minimum
-        and maximum x-values (inclusive) to include in the outputted cropped tiff
-
-    Returns
-    -------
-    tuple[List[int], List[int], List[int]]
-        Tuple of 3 lists, each of 2 ints, in format ( [x_min, x_max], [y_min, y_max], [z_min, z_max] )
-    """
-
-
-    if x_dim is None and crop_x is None:
-        raise ValueError("Need to specify at least x_dim or crop_x")
-    if y_dim is None and crop_y is None:
-        raise ValueError("Need to specify at least y_dim or crop_y")
-    if z_dim is None and crop_z is None:
-        raise ValueError("Need to specify at least z_dim or crop_z")
-
-    if x_dim is None:
-        x_dim = float("Inf")
-    if y_dim is None:
-        y_dim = float("Inf")
-    if z_dim is None:
-        z_dim = float("Inf")
-
-    if crop_x is None:
-        crop_x_list = [1, x_dim]
-    elif type(crop_x) is list:
-        crop_x_list = crop_x
-    elif type(crop_x) is tuple:
-        crop_x_list = list(crop_x)
-    else:
-        crop_x_list = [int(s) for s in crop_x.split(",")]
-    if crop_x_list[0] < 0:
-        raise ValueError("Minimum x-cropping value must be positive")
-    if crop_x_list[0] > crop_x_list[1]:
-        raise ValueError("Minimum x-cropping value must be smaller"
-                         "than maximum x-cropping value")
-    if crop_x_list[1] > x_dim:
-        raise ValueError("Maximum x-cropping value must be smaller than"
-                         "the dimensions of the image")
-    if len(crop_x_list) != 2:
-        raise ValueError("2 components need to be specified, not {}!".format(len(crop_x)))
-
-    if crop_y is None:
-        crop_y_list = [1, y_dim]
-    elif type(crop_y) is list:
-        crop_y_list = crop_y
-    elif type(crop_y) is tuple:
-        crop_y_list = list(crop_y)
-    else:
-        crop_y_list = [int(s) for s in crop_y.split(",")]
-    if crop_y_list[0] < 0:
-        raise ValueError("Minimum y-cropping value must be positive")
-    if crop_y_list[0] > crop_y_list[1]:
-        raise ValueError("Minimum y-cropping value must be smaller"
-                         "than maximum y-cropping value")
-    if crop_y_list[1] > y_dim:
-        raise ValueError("Maximum y-cropping value must be smaller than"
-                         "the dimensions of the image")
-    if len(crop_y_list) != 2:
-        raise ValueError("2 components need to be specified, not {}!".format(len(crop_y)))
-
-    if crop_z is None:
-        crop_z_list = [1, z_dim]
-    elif type(crop_z) is list:
-        crop_z_list = crop_z
-    elif type(crop_z) is tuple:
-        crop_z_list = list(crop_z)
-    else:
-        crop_z_list = [int(s) for s in crop_z.split(",")]
-    if crop_z_list[0] < 0:
-        raise ValueError("Minimum z-cropping value must be positive")
-    if crop_z_list[0] > crop_z_list[1]:
-        raise ValueError("Minimum z-cropping value must be smaller"
-                         "than maximum z-cropping value")
-    if crop_z_list[1] > z_dim:
-        raise ValueError("Maximum z-cropping value must be smaller than"
-                         "the dimensions of the image")
-    if len(crop_z_list) != 2:
-        raise ValueError("2 components need to be specified, not {}!".format(len(crop_z)))
-
-    return crop_x_list, crop_y_list, crop_z_list
 
 
 def reshape_single_tiff(file_path: str) -> numpy.ndarray:
@@ -354,9 +211,9 @@ def crop_single_tiff(
         tiff_ndarray: numpy.ndarray,
         output_filepath: str,
         output_tiff_stack: bool,
-        crop_x: Sequence[int],
-        crop_y: Sequence[int],
-        crop_z: Sequence[int]) -> None:
+        crop_x: Tuple[int, int],
+        crop_y: Tuple[int, int],
+        crop_z: Tuple[int, int]) -> None:
     """Crops a TIFF ndarray, saving as a TIFF file
 
     Parameters

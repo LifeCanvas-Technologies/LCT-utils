@@ -1,10 +1,10 @@
 from setuptools import setup
 
-version = "0.2.1"
+version = "0.2.2"
 description = "Command-line cropping of TIFF files and stacks as well as corresponding JSON coordinate files"
 
 setup(
-    name="crop_tiffs",
+    name="LCT-utils",
     version=version,
     description=description,
     install_requires=[
@@ -13,10 +13,10 @@ setup(
         'tqdm'
     ],
     author="Richard Qiu",
-    packages=["crop_tiffs"],
+    packages=["LCT_utils"],
     entry_points={
         "console_scripts": [
-            "crop-tiff=crop_tiffs.crop_tiffs:main",
-            "crop-json=crop_tiffs.crop_jsons:main"
+            "crop-tiff=LCT_utils.crop_tiffs:main",
+            "crop-json=LCT_utils.crop_jsons:main"
         ]}
 )
