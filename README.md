@@ -63,7 +63,7 @@ remain accurate for a TIFF file cropped to the same specifications
 where:
 * *--input* is a path to a JSON file of 3D coordinates **only** 
 * *--output* is the path to which the cropped JSON file should be written; 
-if *--output* is not included, **crop-json** will instead print out the number of coordinate triples
+if *--output* is not included, **crop-json** will instead print out the number of coordinate triples that
 are in the input JSON file
 * *--crop-x* specifies the minimum and maximum values in the x-dimension that should be included
 in the crop
