@@ -41,8 +41,8 @@ def parse_args(args=sys.argv[1:]):
 def main(args=sys.argv[1:]):
     args = parse_args(args)
     if args.output is None:
-        check_dims(input_glob_or_list=args.input,
-                   print_out=True)
+        get_tiff_dims(input_glob_or_list=args.input,
+                      print_out=True)
     else:
         crop_tiff(input_glob_or_list=args.input,
                   output_path=args.output,
@@ -94,7 +94,7 @@ def crop_tiff(input_glob_or_list: Union[str, List[str]],
             if output_path[-1] != "/":
                 output_path += "/"
 
-    x_dim, y_dim, z_dim = check_dims(input_glob_or_list)
+    x_dim, y_dim, z_dim = get_tiff_dims(input_glob_or_list)
     crop_x, crop_y, crop_z = parse_crop_dims_str(crop_x, crop_y, crop_z)
     crop_x, crop_y, crop_z = validate_tiff_crop_dims(x_dim, y_dim, z_dim, crop_x, crop_y, crop_z)
 
@@ -115,7 +115,7 @@ def crop_tiff(input_glob_or_list: Union[str, List[str]],
                         crop_z=crop_z)
 
 
-def check_dims(input_glob_or_list, print_out: bool = True) -> Tuple[int, int, int]:
+def get_tiff_dims(input_glob_or_list, print_out: bool = True) -> Tuple[int, int, int]:
     """Checks the dimensions of the tiff file(s) at the given glob
 
     Parameters

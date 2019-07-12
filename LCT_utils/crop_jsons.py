@@ -31,7 +31,7 @@ def parse_args(args=sys.argv[1:]):
 def main(args=sys.argv[1:]):
     args = parse_args(args)
     if args.output is None:
-        num_tuples = get_num_tuples(input_path=args.input)
+        num_tuples = get_num_coords(input_path=args.input)
         print("JSON file at {} has {} coordinate tuples".format(args.input, num_tuples))
     else:
         crop_json(input_path=args.input,
@@ -100,7 +100,7 @@ def crop_json(input_path: str,
     pretty_print_json_coords(cropped_coords, output_path)
 
 
-def get_num_tuples(input_path: str) -> int:
+def get_num_coords(input_path: str) -> int:
     """Simple function to return the number of coordinate tuples from a given json file
 
     Parameters
