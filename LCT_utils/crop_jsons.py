@@ -6,8 +6,7 @@ import argparse
 import sys
 import json
 from typing import List, Tuple, Union
-from .crop_tiffs import crop_str_to_tuple
-import tqdm.auto as tqdm
+from .utils import parse_crop_dims_str, pretty_print_json_coords
 
 
 def parse_args(args=sys.argv[1:]):
@@ -51,6 +50,8 @@ def crop_json(input_path: str,
     Assumes json field with coordinates is only content in input json file, maps old coordinates to
     new coordinates assuming that the lower bounds on each of crop_x, crop_y, and crop_z will be (0, 0, 0)
 
+    Also assumes coordinates are 3D
+
     Parameters
     ----------
     input_path : str
@@ -71,7 +72,7 @@ def crop_json(input_path: str,
     -------
     None
     """
-    crop_x, crop_y, crop_z = crop_str_to_tuple(crop_x=crop_x, crop_y=crop_y, crop_z=crop_z)
+    crop_x, crop_y, crop_z = parse_crop_dims_str(crop_x=crop_x, crop_y=crop_y, crop_z=crop_z)
 
     with open(input_path) as fd:
         full_coords = json.load(fd)
@@ -80,20 +81,23 @@ def crop_json(input_path: str,
     cropped_coords = []
     for x, y, z in full_coords:
         if crop_x[0] <= x <= crop_x[1] and crop_y[0] <= y <= crop_y[1] and crop_z[0] <= z <= crop_z[1]:
-            cropped_coord = [x - crop_x[0], y - crop_y[0], z - crop_z[0]]
+            if crop_x[0] != -float("Inf"):
+                cropped_x = x - crop_x[0]
+            else:
+                cropped_x = x
+            if crop_y[0] != -float("Inf"):
+                cropped_y = y - crop_y[0]
+            else:
+                cropped_y = y
+            if crop_z[0] != -float("Inf"):
+                cropped_z = z - crop_z[0]
+            else:
+                cropped_z = z
+            cropped_coord = [cropped_x, cropped_y, cropped_z]
             cropped_coords.append(cropped_coord)
 
     print("Writing {} coordinate tuples to {}".format(len(cropped_coords), output_path))
-    with open(output_path, "w") as fd:
-        first_time = True
-        fd.write("[\n")
-        for x, y, z in tqdm.tqdm(cropped_coords):
-            if first_time:
-                first_time = False
-            else:
-                fd.write(",\n")
-            fd.write("  [%.1f,%.1f,%.1f]" % (x, y, z))
-        fd.write("]\n")
+    pretty_print_json_coords(cropped_coords, output_path)
 
 
 def get_num_tuples(input_path: str) -> int:
