@@ -1,6 +1,6 @@
 from setuptools import setup
 
-version = "0.2.2"
+version = "0.3.0"
 description = "Command-line cropping of TIFF files and stacks as well as corresponding JSON coordinate files"
 
 setup(
@@ -9,14 +9,17 @@ setup(
     description=description,
     install_requires=[
         "numpy",
+        "scipy",
         "tifffile",
-        'tqdm'
+        'tqdm',
+        'scikit-image'
     ],
     author="Richard Qiu",
     packages=["LCT_utils"],
     entry_points={
         "console_scripts": [
-            "crop-tiff=LCT_utils.crop_tiffs:main",
-            "crop-json=LCT_utils.crop_jsons:main"
+            "transform-tiff=LCT_utils.transform_tiffs:main",
+            "transform-json=LCT_utils.transform_jsons:main",
+            "json-to-tiff=LCT_utils.json_to_tiff:main"
         ]}
 )

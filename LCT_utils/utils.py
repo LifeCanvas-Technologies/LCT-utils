@@ -2,8 +2,11 @@
 """
 
 import glob
+import sys
 from typing import Tuple, List, Union
-from warnings import warn
+
+import numpy as np
+import tifffile
 import tqdm.auto as tqdm
 
 
@@ -39,6 +42,122 @@ def glob_to_list(glob_or_list: Union[List[str], Tuple[str, ...], str]) -> List[s
         raise TypeError("Input was not a glob, list, or tuple")
 
     return output_list
+
+
+def get_tiff_dims(input_glob_or_list: Union[List[str], Tuple[str, ...], str],
+                  print_out: bool = True) -> Tuple[int, int, int]:
+    """Checks the dimensions of the tiff file(s) at the given glob
+
+    Parameters
+    ----------
+    input_glob_or_list : Union[str, List[str], Tuple[str]]
+        Either a UNIX-style glob corresponding to the respective tiff files or a list/tuple of file paths
+    print_out : bool
+        True if the dimensions of the tiff should be printed to the console, False otherwise
+
+    Returns
+    -------
+    Tuple[int, int, int]
+        Tuple of ints corresponding to dimensions in the x, y, and z directions respectively
+
+    """
+    tiff_paths = glob_to_list(input_glob_or_list)
+
+    if len(tiff_paths) == 1:
+        tiff_ndarray = reshape_single_tiff(tiff_paths[0])
+        x_dim, y_dim, z_dim = get_single_tiff_dims(tiff_ndarray)
+    else:
+        x_dim, y_dim, z_dim = get_multi_tiff_dims(tiff_paths)
+
+    if print_out:
+        dims_str = str(x_dim) + ", " + str(y_dim) + ", " + str(z_dim)
+        print("Dimensions (x, y, z) (width, height, depth) [units: voxels]  : ", dims_str)
+
+    return x_dim, y_dim, z_dim
+
+
+def reshape_single_tiff(file_path: str) -> np.ndarray:
+    """Given a file path, returns reformatted ndarray and its dimensions
+
+    Note: assumes there are no more than 9 extra channels and that
+    there are at least 10 pixels in the y dimension
+
+    Parameters
+    ----------
+    file_path : str
+        A path to a tiff file, e.g. "/path-to-tiffs/example.tiff"
+
+    Returns
+    -------
+    numpy.ndarray
+        A reformatted ndarray with dimensions
+        in the following order: [z, y, x, <extra channels>], where extra
+        channels are optional (including RGB, CMYK, alpha, etc.)
+    """
+    tiff_ndarray = tifffile.imread(file_path)
+
+    if tiff_ndarray.ndim == 2:
+        # Interpret as 2D greyscale TIFF
+        tiff_ndarray_reshape = tiff_ndarray[np.newaxis, ...]
+    elif tiff_ndarray.ndim == 3:
+        if tiff_ndarray.shape[-1] < 10:
+            # Interpret as 2D TIFF with extra channels
+            tiff_ndarray_reshape = tiff_ndarray[np.newaxis, ...]
+        else:
+            # Interpret as 3D TIFF
+            tiff_ndarray_reshape = tiff_ndarray.copy()
+    elif tiff_ndarray.ndim == 4:
+        # Interpret as 3D TIFF with extra channels
+        tiff_ndarray_reshape = tiff_ndarray.copy()
+    else:
+        sys.stderr.write("Not yet configured to handle this kind of TIFF.")
+        sys.exit(1)
+
+    return tiff_ndarray_reshape
+
+
+def get_single_tiff_dims(tiff_ndarray: np.ndarray):
+    """Returns dimensions of a tiff represented by a reshaped array
+
+    Parameters
+    ----------
+    tiff_ndarray : numpy.ndarray
+        A reshaped numpy array represented the tiff at hand
+
+    Returns
+    -------
+    x_dim : int
+        The number of voxels in the x-direction
+    y_dim : int
+        The number of voxels in the y-direction
+    z_dim : int
+        The number of voxels in the z-direction
+    """
+    z_dim, y_dim, x_dim = tiff_ndarray.shape[0:3]
+    return x_dim, y_dim, z_dim
+
+
+def get_multi_tiff_dims(tiff_paths: List[str]) -> Tuple[int, int, int]:
+    """Given a UNIX-style glob, returns dimensions of the TIFF stack and a list of file paths
+
+    Parameters
+    ----------
+    tiff_paths : List[str]
+        a list of file paths to each individual tiff in the tiff stack
+
+    Returns
+    -------
+    x_dim : int
+        The number of voxels in the x-direction
+    y_dim : int
+        The number of voxels in the y-direction
+    z_dim : int
+        The number of voxels in the z-direction
+    """
+    z_dim = len(tiff_paths)
+    y_dim, x_dim = tifffile.imread(tiff_paths[0]).shape[0:2]
+
+    return x_dim, y_dim, z_dim
 
 
 def parse_crop_dims_str(crop_x: Union[str, List[float], Tuple[float, float]] = None,
@@ -156,42 +275,42 @@ def validate_tiff_crop_dims(x_dim: int,
     # Handle out of range bounds
     # NOTE: must happen first to handle Inf and -Inf properly
     if crop_x[0] < 1:
-        warn("x-cropping lower bound less than 1, setting to 1")
+        # warn("x-cropping lower bound less than 1, setting to 1")
         crop_x = (1, crop_x[1])
-    if crop_x[1] < 1:
-        warn("x-cropping upper bound exceeds TIFF bounds, setting to {}".format(x_dim))
-        crop_x = (crop_x, x_dim)
+    if crop_x[1] > x_dim:
+        # warn("x-cropping upper bound exceeds TIFF bounds, setting to {}".format(x_dim))
+        crop_x = (crop_x[0], x_dim)
     if crop_y[0] < 1:
-        warn("y-cropping lower bound less than 1, setting to 1")
+        # warn("y-cropping lower bound less than 1, setting to 1")
         crop_y = (1, crop_y[1])
-    if crop_y[1] < 1:
-        warn("y-cropping upper bound exceeds TIFF bounds, setting to {}".format(y_dim))
-        crop_y = (crop_y, y_dim)
+    if crop_y[1] > y_dim:
+        # warn("y-cropping upper bound exceeds TIFF bounds, setting to {}".format(y_dim))
+        crop_y = (crop_y[0], y_dim)
     if crop_z[0] < 1:
-        warn("z-cropping lower bound less than 1, setting to 1")
+        # warn("z-cropping lower bound less than 1, setting to 1")
         crop_z = (1, crop_z[1])
-    if crop_z[1] < 1:
-        warn("z-cropping upper bound exceeds TIFF bounds, setting to {}".format(z_dim))
-        crop_z = (crop_z, z_dim)
+    if crop_z[1] > z_dim:
+        # warn("z-cropping upper bound exceeds TIFF bounds, setting to {}".format(z_dim))
+        crop_z = (crop_z[0], z_dim)
 
     # Handle float bounds
     if type(crop_x[0]) is float:
-        warn("x-cropping lower bound is float, converting to int")
+        # warn("x-cropping lower bound is float, converting to int")
         crop_x = (int(crop_x[0]), crop_x[1])
     if type(crop_x[1]) is float:
-        warn("x-cropping upper bound is float, converting to int")
+        # warn("x-cropping upper bound is float, converting to int")
         crop_x = (crop_x[0], int(crop_x[1]))
     if type(crop_y[0]) is float:
-        warn("y-cropping lower bound is float, converting to int")
+        # warn("y-cropping lower bound is float, converting to int")
         crop_y = (int(crop_y[0]), crop_y[1])
     if type(crop_y[1]) is float:
-        warn("y-cropping upper bound is float, converting to int")
+        # warn("y-cropping upper bound is float, converting to int")
         crop_y = (crop_y[0], int(crop_y[1]))
     if type(crop_z[0]) is float:
-        warn("z-cropping lower bound is float, converting to int")
+        # warn("z-cropping lower bound is float, converting to int")
         crop_z = (int(crop_z[0]), crop_z[1])
     if type(crop_z[1]) is float:
-        warn("z-cropping upper bound is float, converting to int")
+        # warn("z-cropping upper bound is float, converting to int")
         crop_z = (crop_z[0], int(crop_z[1]))
 
     return crop_x, crop_y, crop_z
