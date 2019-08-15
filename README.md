@@ -1,13 +1,13 @@
-# LCT_utils
-LCT_utils is a small utility package that enables the command-line cropping of very large TIFF files
+# LCT-utils
+LCT-utils is a small utility package that enables the command-line cropping of very large TIFF files
 and particularly formatted JSON files with coordinates corresponding to TIFF files. 
 
 In particular, this package was predominantly designed to ease the handling of large quantities of
-volumetric data produced in the process of high-throughput microscopy, but the modules making up LCT_utils
+volumetric data produced in the process of high-throughput microscopy, but the modules making up LCT-utils
 can easily be adapted to other use cases. 
 
 ## Installation
-LCT_utils can be installed through GitHub using pip by running:
+LCT-utils can be installed through GitHub using pip by running:
 
 `$ pip install git+https://github.com/lifecanvastech/LCT-utils`
 
