@@ -7,13 +7,9 @@ volumetric data produced in the process of high-throughput microscopy, but the m
 can easily be adapted to other use cases. 
 
 ## Installation
-LCT_utils can be install using pip:
+LCT_utils can be installed through GitHub using pip by running:
 
-`$ pip install LCT_utils`
-
-Alternatively, a dev version of LCT_utils can be installed by running:
-
-`$ pip install git+https://github.com/lifecanvastech/LCT-utils.git`
+`$ pip install git+https://github.com/lifecanvastech/LCT-utils`
 
 ## Command Line Usage
 ### The transform-tiff command
