@@ -65,7 +65,7 @@ def main(args=sys.argv[1:]):
 
 
 def write_tiff(z: int,
-               coords_by_z: List[List[int, int, int]],
+               coords_by_z: List[List[int]],
                filename: str,
                x_dim,
                y_dim):
