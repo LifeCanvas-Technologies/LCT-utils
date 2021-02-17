@@ -22,12 +22,8 @@ import tifffile
 import tqdm.auto as tqdm
 
 
-try:
-    from .utils import \
-        glob_to_list, get_tiff_dims, parse_crop_dims_str, validate_tiff_crop_dims, reshape_single_tiff
-except ModuleNotFoundError:
-    from LCT_utils.utils import \
-        glob_to_list, get_tiff_dims, parse_crop_dims_str, validate_tiff_crop_dims, reshape_single_tiff
+from LCT_utils.utils import \
+    glob_to_list, get_tiff_dims, parse_crop_dims_str, validate_tiff_crop_dims, reshape_single_tiff
 
 
 def parse_args(args=sys.argv[1:]):
@@ -407,7 +403,7 @@ def transform_multi_tiff(
     z_min, z_max = crop_z
 
     z_pixels = scale_z * (z_max - z_min + 1)
-    z_range = np.linspace(z_min - 1, z_max - 1, np.round(z_pixels))
+    z_range = np.linspace(z_min - 1, z_max - 1, np.round(z_pixels).astype('int'))
     if flip_z:
         z_range = np.flip(z_range)
 
